@@ -1,0 +1,173 @@
+#ifndef DEPENDENCIES
+#define DEPENDENCIES
+
+#define LENGTH_THRESHOLD 24
+#define BLOLCKSIZE 64
+#define CACHE_SIZE 64
+#define MOVE(x) std::move(x)
+
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <vector>
+#endif
+
+namespace sort_algo {
+// Insertion sort(begin, end, comp_fn); in-place sorting
+template <class Iter, class Compare>
+inline void insertion_sort(Iter begin, Iter end, Compare comp) {
+  typedef typename std::iterator_traits<Iter>::value_type T;
+  if (begin == end)
+    return;
+  for (Iter current = begin + 1; current != end; ++current) {
+    Iter c1 = current;
+    Iter c0 = current - 1;
+
+    if (comp(*c1, *c0)) {
+      T tmp = MOVE(*c1);
+      do {
+        *c1 = MOVE(*c0);
+        --c1;
+        --c0;
+      } while (c1 != begin && comp(tmp, *c0));
+      *c1 = MOVE(tmp);
+    }
+  }
+}
+
+template <class Iter, class Compare>
+inline void merge(Iter begin, Compare comp, size_t left, size_t middle,
+                  size_t right) {
+  typedef typename std::iterator_traits<Iter>::value_type T;
+  std::vector<T> vec;
+  vec.reserve(left + right);
+  Iter p1 = begin + left, p2 = begin + middle, p1_end = begin + middle,
+       p2_end = begin + right;
+  do {
+    if (comp(*p1, *p2)) {
+      vec.push_back(*p2);
+      ++p1;
+    } else {
+      vec.push_back(*p2);
+      ++p2;
+    }
+  } while (p1 != p1_end && p2 != p2_end);
+
+  if (p1 != p1_end) {
+    do {
+      vec.push_back(*p1);
+      ++p1;
+    } while (p1 != p1_end);
+  } else if (p2 != p2_end) {
+    do {
+      vec.push_back(*p2);
+      ++p2;
+    } while (p2 != p2_end);
+  }
+
+  Iter cur = begin + left;
+  for (auto val : vec)
+    *cur++ = MOVE(val);
+}
+
+template <class Iter, class Compare>
+void merge_sort(Iter begin, Compare comp, size_t left, size_t right) {
+  auto len = right - left;
+
+  if (len <= 0)
+    return;
+  else if (len <= LENGTH_THRESHOLD)
+    insertion_sort(begin + left, begin + right, comp);
+  else {
+    size_t middle = (left + right) / 2;
+    merge_sort(begin, comp, left, middle);
+    merge_sort(begin, comp, middle, right);
+    merge(begin, comp, left, middle, right);
+  }
+}
+template <class Iter, class Compare>
+inline int partition(Iter begin, Compare comp, int low, int high) {
+  typedef typename std::iterator_traits<Iter>::value_type T;
+  T pivot_elem = *(begin + high - 1);
+  int i = low;
+
+  Iter p1 = begin + low;
+  Iter p2 = begin + low;
+  Iter p1_end = begin + high - 1;
+
+  for (; p1 != p1_end; ++p1) {
+    if (comp(*p1, pivot_elem)) {
+      if (p1 != p2) {
+        T tmp = MOVE(*p2);
+        *p2 = MOVE(*p1);
+        *p1 = MOVE(tmp);
+      }
+      ++i;
+      ++p2;
+    }
+  }
+
+  T tmp = MOVE(*p2);
+  *p2 = MOVE(*p1_end);
+  *p1 = MOVE(tmp);
+
+  return i;
+}
+
+template <class Iter, class Compare>
+void quick_sort(Iter begin, Compare comp, int low, int high) {
+  auto len = high - low;
+  if (len <= 0)
+    return;
+  else {
+    auto pivot = partition(begin, comp, low, high);
+    quick_sort(begin, comp, low, pivot);
+    quick_sort(begin, comp, pivot + 1, high);
+  }
+}
+
+template<class T>
+struct node 
+{
+  T data;
+    
+}
+
+template<class Iter, class Compare>
+inline void radix_sort(Iter begin, Iter end, Compare comp)
+{
+
+}
+
+template <class Iter>
+inline void print_first_10_elem(Iter begin, int size, int MAX_SIZE = 10) {
+  int n = size >= MAX_SIZE ? MAX_SIZE : size;
+  for (int i = 0; i < n; ++i) {
+    std::cout << *(begin + i) << (i == n - 1 ? "\n" : ",");
+  }
+}
+
+// int main() {
+// int n = 100;
+// std::vector<int> vec;
+// vec.reserve(n);
+// for (int i = n; i > 0; --i) {
+// vec.push_back(i);
+// }
+//
+// std::cout << "before: \n";
+// print_first_10_elem(vec.begin(), n, 100);
+// insertion_sort(vec.begin(), vec.end(), std::less<int>());
+// merge_sort(vec.begin(), vec.end(), std::less<int>(), 0, vec.size());
+// quick_sort(vec.begin(), vec.end(), std::less<int>(), 0, vec.size());
+// std::cout << "after: \n";
+// print_first_10_elem(vec.begin(), n, 100);
+//
+// return 0;
+// }
+} // namespace sort_algo
+
+// int main()
+// {
+// sort_algo::main();
+// }
