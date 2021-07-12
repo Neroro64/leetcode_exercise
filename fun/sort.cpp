@@ -7,8 +7,10 @@
 #define MOVE(x) std::move(x)
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <iterator>
+#include <tuple>
 #include <vector>
 #endif
 
@@ -126,18 +128,131 @@ void quick_sort(Iter begin, Compare comp, int low, int high) {
   }
 }
 
-template<class T>
-struct node 
-{
+template <class T> struct node {
   T data;
+  node *next;
+  node *tail;
+};
+
+template <class T> struct NodeIterator {
+  using iterator_category = std::forward_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = node<T>;
+  using pointer = node<T> *;
+  using reference = node<T> &;
+
+  NodeIterator<T>(pointer ptr) : m_ptr(ptr) {}
+
+  reference operator*() const { return *m_ptr; }
+  pointer operator->() { return m_ptr; }
+
+  NodeIterator<T> operator++() {
+    m_ptr = m_ptr->next;
+    return *this;
+  }
+  NodeIterator<T> operator++(int) {
+    NodeIterator<T> tmp = *this;
+    m_ptr = m_ptr->next;
+    return tmp;
+  }
+  friend bool operator==(const NodeIterator<T> &a, const NodeIterator<T> &b) {
+    return a.m_ptr == b.m_ptr;
+  }
+  friend bool operator!=(const NodeIterator<T> &a, const NodeIterator<T> &b) {
+    return a.m_ptr != b.m_ptr;
+  }
+
+private:
+  pointer m_ptr;
+};
+
+template <class Iter, class Compare>
+inline typename std::iterator_traits<Iter>::value_type
+find_max(Iter begin, Iter end, Compare comp) {
+  typedef typename std::iterator_traits<Iter>::value_type T;
+  T max_val = *begin;
+  for (auto ite = begin + 1; ite != end; ++ite) {
+    if (comp(max_val, *ite))
+      max_val = *ite;
+  }
+  return max_val;
+}
+
+template <class Iter, class Compare>
+inline void radix_sort(Iter begin, Iter end, Compare comp) {
+  typedef typename std::iterator_traits<Iter>::value_type T;
+  size_t size = std::distance(begin, end);
+  T buffer[size];
+
+  T max_val = find_max(begin, end, comp);
+  for (int exp = 1; max_val / exp >= 1; exp *= 10) {
+    int counts[10] = {0};
+    for (auto ite = begin; ite != end; ++ite) {
+      int idx = static_cast<int>(std::floor((*ite / exp) % 10));
+      counts[idx] += 1;
+    }
+    for (int i = 1; i < 10; ++i)
+      counts[i] += counts[i - 1];
     
+    auto ite = end-1;
+    // for (auto [i, ite] = std::tuple{size - 1, end - 1}; i >= 0; --i, --ite) {
+    for (int i = size - 1; i >= 0; --i, --ite) {
+      int idx = static_cast<int>(std::floor((*ite / exp) % 10));
+      buffer[counts[idx] - 1] = *ite;
+      --counts[idx];
+    }
+  }
+  for (auto [ite, k] = std::tuple{begin, 0}; ite != end; ++ite, ++k)
+    *ite = buffer[k];
 }
 
-template<class Iter, class Compare>
-inline void radix_sort(Iter begin, Iter end, Compare comp)
-{
-
-}
+// template <class Iter, class Compare>
+// inline void radix_sort_old(Iter begin, Iter end, Compare comp) {
+// Iter o_begin = begin, o_end = end;
+//
+// typedef typename std::iterator_traits<Iter>::value_type T;
+// node<T> *arr1[10] = {nullptr}, *arr2[10] = {nullptr};
+// node<T> **a1 = arr1, **a2 = arr2;
+//
+// auto max = find_max(begin, end, comp);
+// int num_loops = std::floor(std::log10(max));
+//
+// for (int i = 0; i <= num_loops; ++i) {
+// for (auto ite = begin; ite != end; ++ite) {
+// T val = std::floor((*ite / std::floor(std::pow(10, i))) % 10);
+// int idx = dynamic_cast<int>(val);
+// if (a1[idx] != nullptr) {
+// auto n = a1[idx];
+// node new_node = {*ite, nullptr, nullptr};
+// n.tail->next = &new_node;
+// n.tail = &new_node;
+// } else {
+// node new_node = {*ite, nullptr, nullptr};
+// a1[idx] = new_node;
+// a1[idx].tail = &new_node;
+// }
+// }
+// for (int j = 0, k=0; j < 9; ++j, k+=1) {
+// a1[j].tail->next = &a1[j + 1];
+// a2[k] = nullptr;
+// a2[k+1] = nullptr;
+// }
+//
+// begin = NodeIterator<T>(&a1[0]);
+// end = nullptr;
+//
+// auto tmp = a1;
+// a1 = a2;
+// a2 = tmp;
+// }
+//
+// for (auto ite = o_begin; ite != o_end; ++ite)
+// {
+// *ite = *begin;
+// ++begin;
+// }
+// }
+//
 
 template <class Iter>
 inline void print_first_10_elem(Iter begin, int size, int MAX_SIZE = 10) {
@@ -147,27 +262,27 @@ inline void print_first_10_elem(Iter begin, int size, int MAX_SIZE = 10) {
   }
 }
 
-// int main() {
-// int n = 100;
-// std::vector<int> vec;
-// vec.reserve(n);
-// for (int i = n; i > 0; --i) {
-// vec.push_back(i);
-// }
-//
-// std::cout << "before: \n";
-// print_first_10_elem(vec.begin(), n, 100);
-// insertion_sort(vec.begin(), vec.end(), std::less<int>());
-// merge_sort(vec.begin(), vec.end(), std::less<int>(), 0, vec.size());
-// quick_sort(vec.begin(), vec.end(), std::less<int>(), 0, vec.size());
-// std::cout << "after: \n";
-// print_first_10_elem(vec.begin(), n, 100);
-//
-// return 0;
-// }
-} // namespace sort_algo
+int main() {
+  int n = 100;
+  std::vector<int> vec;
+  vec.reserve(n);
+  for (int i = n; i > 0; --i) {
+    vec.push_back(i);
+  }
 
-// int main()
-// {
-// sort_algo::main();
-// }
+  std::cout << "before: \n";
+  print_first_10_elem(vec.begin(), n, 100);
+  insertion_sort(vec.begin(), vec.end(), std::less<int>());
+  // merge_sort(vec.begin(), std::less<int>(), 0, vec.size());
+  // quick_sort(vec.begin(), std::less<int>(), 0, vec.size());
+  radix_sort(vec.begin(), vec.end(), std::less<int>());
+  std::cout << "after: \n";
+  print_first_10_elem(vec.begin(), n, 100);
+
+  return 0;
+}
+} // namespace sort_algo
+// } // namespace sort_algo
+//
+int main() { sort_algo::main(); }
+//

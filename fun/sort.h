@@ -7,8 +7,10 @@
 #define MOVE(x) std::move(x)
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <iterator>
+#include <tuple>
 #include <vector>
 #endif
 
@@ -70,16 +72,6 @@ inline void merge(Iter begin, Compare comp, size_t left, size_t middle,
     *cur++ = MOVE(val);
 }
 
-
-template <class Iter, class Compare>
-void MERGE_SORT(Iter begin, Iter end, Compare comp) 
-{
-  if (begin != end)
-  {
-    merge_sort(begin, comp, 0, std::distance(begin, end));
-  }
-}
-
 template <class Iter, class Compare>
 void merge_sort(Iter begin, Compare comp, size_t left, size_t right) {
   auto len = right - left;
@@ -93,6 +85,13 @@ void merge_sort(Iter begin, Compare comp, size_t left, size_t right) {
     merge_sort(begin, comp, left, middle);
     merge_sort(begin, comp, middle, right);
     merge(begin, comp, left, middle, right);
+  }
+}
+
+template <class Iter, class Compare>
+void MERGE_SORT(Iter begin, Iter end, Compare comp) {
+  if (begin != end) {
+    merge_sort(begin, comp, 0, std::distance(begin, end));
   }
 }
 template <class Iter, class Compare>
@@ -137,18 +136,50 @@ void quick_sort(Iter begin, Compare comp, int low, int high) {
 }
 
 template <class Iter, class Compare>
-void QUICK_SORT(Iter begin, Iter end, Compare comp) 
-{
-  if (begin != end)
-  {
+void QUICK_SORT(Iter begin, Iter end, Compare comp) {
+  if (begin != end) {
     quick_sort(begin, comp, 0, std::distance(begin, end));
   }
 }
 
 template <class Iter, class Compare>
-inline void RADIX_SORT(Iter begin, Iter end, Compare comp)
-{
+inline typename std::iterator_traits<Iter>::value_type
+find_max(Iter begin, Iter end, Compare comp) {
+  typedef typename std::iterator_traits<Iter>::value_type T;
+  T max_val = *begin;
+  for (auto ite = begin + 1; ite != end; ++ite) {
+    if (comp(max_val, *ite))
+      max_val = *ite;
+  }
+  return max_val;
+}
 
+
+template <class Iter, class Compare>
+inline void RADIX_SORT(Iter begin, Iter end, Compare comp) {
+  typedef typename std::iterator_traits<Iter>::value_type T;
+  size_t size = std::distance(begin, end);
+  T buffer[size];
+
+  T max_val = find_max(begin, end, comp);
+  for (int exp = 1; max_val / exp >= 1; exp *= 10) {
+    int counts[10] = {0};
+    for (auto ite = begin; ite != end; ++ite) {
+      int idx = static_cast<int>(std::floor((*ite / exp) % 10));
+      counts[idx] += 1;
+    }
+    for (int i = 1; i < 10; ++i)
+      counts[i] += counts[i - 1];
+
+    auto ite = end - 1;
+    for (int i = size - 1; i >= 0; --i, --ite) {
+      int idx = static_cast<int>(std::floor((*ite / exp) % 10));
+      buffer[counts[idx] - 1] = MOVE(*ite);
+      --counts[idx];
+    }
+  }
+  for (auto [ite, k] = std::tuple{begin, 0}; ite != end; ++ite, ++k)
+    *ite = MOVE(buffer[k]);
 }
 
 template <class Iter>
@@ -158,4 +189,4 @@ inline void print_first_10_elem(Iter begin, int size, int MAX_SIZE = 10) {
     std::cout << *(begin + i) << (i == n - 1 ? "\n" : ",");
   }
 }
-}
+} // namespace sort_algo
