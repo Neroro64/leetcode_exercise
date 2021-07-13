@@ -7,6 +7,7 @@
 #define MOVE(x) std::move(x)
 
 #include <cassert>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <iterator>
@@ -47,7 +48,7 @@ inline void merge(Iter begin, Compare comp, size_t left, size_t middle,
        p2_end = begin + right;
   do {
     if (comp(*p1, *p2)) {
-      vec.push_back(*p2);
+      vec.push_back(*p1);
       ++p1;
     } else {
       vec.push_back(*p2);
@@ -128,6 +129,8 @@ void quick_sort(Iter begin, Compare comp, int low, int high) {
   auto len = high - low;
   if (len <= 0)
     return;
+  else if (len <= LENGTH_THRESHOLD)
+    insertion_sort(begin + low, begin + high, comp);
   else {
     auto pivot = partition(begin, comp, low, high);
     quick_sort(begin, comp, low, pivot);
@@ -138,6 +141,7 @@ void quick_sort(Iter begin, Compare comp, int low, int high) {
 template <class Iter, class Compare>
 void QUICK_SORT(Iter begin, Iter end, Compare comp) {
   if (begin != end) {
+    std::random_shuffle(begin, end);
     quick_sort(begin, comp, 0, std::distance(begin, end));
   }
 }
@@ -153,7 +157,6 @@ find_max(Iter begin, Iter end, Compare comp) {
   }
   return max_val;
 }
-
 
 template <class Iter, class Compare>
 inline void RADIX_SORT(Iter begin, Iter end, Compare comp) {
@@ -171,15 +174,14 @@ inline void RADIX_SORT(Iter begin, Iter end, Compare comp) {
     for (int i = 1; i < 10; ++i)
       counts[i] += counts[i - 1];
 
-    auto ite = end - 1;
-    for (int i = size - 1; i >= 0; --i, --ite) {
+    for (auto ite = end - 1; ite != begin - 1; --ite) {
       int idx = static_cast<int>(std::floor((*ite / exp) % 10));
       buffer[counts[idx] - 1] = MOVE(*ite);
       --counts[idx];
     }
+    for (auto [ite, k] = std::tuple{begin, 0}; ite != end; ++ite, ++k)
+      *ite = MOVE(buffer[k]);
   }
-  for (auto [ite, k] = std::tuple{begin, 0}; ite != end; ++ite, ++k)
-    *ite = MOVE(buffer[k]);
 }
 
 template <class Iter>

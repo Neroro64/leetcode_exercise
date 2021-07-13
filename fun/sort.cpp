@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <tuple>
@@ -47,7 +48,7 @@ inline void merge(Iter begin, Compare comp, size_t left, size_t middle,
        p2_end = begin + right;
   do {
     if (comp(*p1, *p2)) {
-      vec.push_back(*p2);
+      vec.push_back(*p1);
       ++p1;
     } else {
       vec.push_back(*p2);
@@ -121,6 +122,8 @@ void quick_sort(Iter begin, Compare comp, int low, int high) {
   auto len = high - low;
   if (len <= 0)
     return;
+  else if (len <= LENGTH_THRESHOLD)
+    insertion_sort(begin + low, begin + high, comp);
   else {
     auto pivot = partition(begin, comp, low, high);
     quick_sort(begin, comp, low, pivot);
@@ -186,24 +189,26 @@ inline void radix_sort(Iter begin, Iter end, Compare comp) {
 
   T max_val = find_max(begin, end, comp);
   for (int exp = 1; max_val / exp >= 1; exp *= 10) {
-    int counts[10] = {0};
+    unsigned int counts[10] = {0};
     for (auto ite = begin; ite != end; ++ite) {
       int idx = static_cast<int>(std::floor((*ite / exp) % 10));
-      counts[idx] += 1;
+      ++counts[idx];
     }
     for (int i = 1; i < 10; ++i)
       counts[i] += counts[i - 1];
-    
-    auto ite = end-1;
+
+    // auto ite = end-1;
     // for (auto [i, ite] = std::tuple{size - 1, end - 1}; i >= 0; --i, --ite) {
-    for (int i = size - 1; i >= 0; --i, --ite) {
+    // for (int i = size - 1; i >= 0; --i, --ite) {
+    for (auto ite = end - 1; ite != begin - 1; --ite) {
       int idx = static_cast<int>(std::floor((*ite / exp) % 10));
-      buffer[counts[idx] - 1] = *ite;
+      buffer[counts[idx] - 1] = MOVE(*ite);
       --counts[idx];
     }
+
+    for (auto [ite, k] = std::tuple{begin, 0}; ite != end; ++ite, ++k)
+      *ite = MOVE(buffer[k]);
   }
-  for (auto [ite, k] = std::tuple{begin, 0}; ite != end; ++ite, ++k)
-    *ite = buffer[k];
 }
 
 // template <class Iter, class Compare>
@@ -263,19 +268,20 @@ inline void print_first_10_elem(Iter begin, int size, int MAX_SIZE = 10) {
 }
 
 int main() {
-  int n = 100;
+  int n = 1000000;
   std::vector<int> vec;
   vec.reserve(n);
-  for (int i = n; i > 0; --i) {
+  for (int i = 0; i < n; ++i){
     vec.push_back(i);
   }
 
   std::cout << "before: \n";
   print_first_10_elem(vec.begin(), n, 100);
-  insertion_sort(vec.begin(), vec.end(), std::less<int>());
+  // insertion_sort(vec.begin(), vec.end(), std::less<int>());
   // merge_sort(vec.begin(), std::less<int>(), 0, vec.size());
-  // quick_sort(vec.begin(), std::less<int>(), 0, vec.size());
-  radix_sort(vec.begin(), vec.end(), std::less<int>());
+  std::random_shuffle(vec.begin(), vec.end());
+  quick_sort(vec.begin(), std::less<int>(), 0, vec.size());
+  // radix_sort(vec.begin(), vec.end(), std::less<int>());
   std::cout << "after: \n";
   print_first_10_elem(vec.begin(), n, 100);
 
