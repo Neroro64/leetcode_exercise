@@ -30,7 +30,10 @@ class Solution:
             for j in range(1,10):       # O(10)
                 counts[j] += counts[j-1]
 
-            s = 0
+            print(digit," : ", nums)
+            print(digit," : ", counts)
+
+            s = 1
             elem = nums[0]
             while s < N:
                 d = int((elem / digit) % 10)
@@ -44,7 +47,7 @@ class Solution:
 
 
 if __name__ == "__main__":
-   arr = np.random.randint(1,100,10)
+   arr = np.random.randint(1,10,10)
    print("Before: ", arr)
    Solution().radixSort(arr)
    print("After: ", arr)
