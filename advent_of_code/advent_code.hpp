@@ -15,12 +15,19 @@ struct Timer{
 		Timer(){
 			clock = std::chrono::steady_clock::now();
 		}
+		Timer(std::optional<float>& resultPtr)
+			:m_resultPtr(resultPtr)
+		{
+			Timer();
+		}
 		~Timer(){
 			std::chrono::duration<float> duration = std::chrono::steady_clock::now() - clock;
-			std::cout << "Elapsed time: " << duration.count() << std::endl;
+			m_resultPtr = duration.count();
+			std::cout << "Elapsed time: " << m_resultPtr.value_or(-1) << std::endl;
 		}
 	private:
 		std::chrono::time_point<std::chrono::steady_clock> clock;
+		std::optional<float> m_resultPtr;
 };
 
 inline static VecStrView&& split(std::string_view& inputStr, char delimiter=' '){

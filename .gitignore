@@ -31,3 +31,7 @@
 *.out
 *.app
 *.ilk
+
+# python cache
+__pycache__/*
+*.pyc
