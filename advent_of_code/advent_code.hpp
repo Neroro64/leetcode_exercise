@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <chrono>
 #include <optional>
+#include <algorithm>
 
 namespace AC {
 #if __linux__
@@ -36,9 +37,10 @@ struct Timer{
 		std::optional<float> m_resultPtr;
 };
 
-static VecStrView&& split(std::string &inputStr, char delimiter=' '){
+static VecStrView split(std::string_view inputStr, char delimiter=' '){
+	size_t charCount = std::count(inputStr.cbegin(), inputStr.cend(), delimiter);
 	VecStrView vecStrView;
-	vecStrView.reserve(100);
+	vecStrView.reserve(charCount+1);
 	size_t strSize = inputStr.size();
 
 	uint32_t offset = 0, pos=0;
@@ -48,7 +50,7 @@ static VecStrView&& split(std::string &inputStr, char delimiter=' '){
 	}
 
 	vecStrView.emplace_back(inputStr.substr(offset, strSize - offset));
-	return std::move(vecStrView);
+	return vecStrView;
 }
 inline static std::string getInputFile(std::string&& year, std::string&& day){
 	std::stringstream filepath;
