@@ -1,13 +1,19 @@
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <stdint.h>
 #include <chrono>
+#include <optional>
 
 namespace AC {
+#if __linux__
+static const std::string ROOT_PATH = "/home/nuoc/dev/leetcode_exercise/advent_of_code/inputs/";
+#elif _WIN32
 static const std::string ROOT_PATH = "e:/dev/leetcode_exercise/advent_of_code/inputs/";
+#endif
 typedef std::vector<std::string_view> VecStrView;
 
 struct Timer{
@@ -22,15 +28,15 @@ struct Timer{
 		}
 		~Timer(){
 			std::chrono::duration<float> duration = std::chrono::steady_clock::now() - clock;
-			m_resultPtr = duration.count();
-			std::cout << "Elapsed time: " << m_resultPtr.value_or(-1) << std::endl;
+			float elapsedTime = m_resultPtr.emplace(duration.count());
+			std::cout << "Elapsed time: " << elapsedTime << std::endl;
 		}
 	private:
 		std::chrono::time_point<std::chrono::steady_clock> clock;
 		std::optional<float> m_resultPtr;
 };
 
-inline static VecStrView&& split(std::string_view& inputStr, char delimiter=' '){
+static VecStrView&& split(std::string &inputStr, char delimiter=' '){
 	VecStrView vecStrView;
 	vecStrView.reserve(100);
 	size_t strSize = inputStr.size();
@@ -44,10 +50,9 @@ inline static VecStrView&& split(std::string_view& inputStr, char delimiter=' ')
 	vecStrView.emplace_back(inputStr.substr(offset, strSize - offset));
 	return std::move(vecStrView);
 }
-inline static std::ifstream&& getInputFile(std::string&& year, std::string&& day){
-	std::stringstream filepath(ROOT_PATH);
-	filepath << year << "/" << day << ".txt";
-	std::ifstream inputFile(std::move(filepath.str()));
-	return std::move(inputFile); 
+inline static std::string getInputFile(std::string&& year, std::string&& day){
+	std::stringstream filepath;
+	filepath << ROOT_PATH << year << "/" << day << ".txt";
+	return filepath.str();
 }
 } // namespace AC
