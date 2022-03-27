@@ -1,4 +1,4 @@
-#include "advent_code.hpp"
+#include "../advent_code.hpp"
 
 int main ()
 {
@@ -21,7 +21,7 @@ int main ()
 		std::stringstream ss;
 		ss << inputFile.rdbuf();
 		std::string s = ss.str();
-		AC::VecStrView tokens = AC::split(s);
+		AC::VecStrView tokens = AC::split(s, '\n');
 		std::cout << "SIZE: " << tokens.size() << std::endl;
 		int i = 0;
 		for (const auto token : tokens){
