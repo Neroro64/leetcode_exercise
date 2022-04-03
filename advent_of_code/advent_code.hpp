@@ -12,6 +12,8 @@
 #include <charconv>
 #include <cmath>
 #include <stdio.h>
+#include <queue>
+#include <unordered_set>
 
 template <typename DataType, typename ResultType> struct InputData {
   DataType data;
@@ -39,6 +41,7 @@ typedef std::vector<std::string_view> VecStrView;
 typedef std::vector<std::string> VecStr;
 typedef std::vector<int> VecInt;
 typedef std::vector<unsigned int> VecUInt;
+typedef unsigned int uint;
 
 namespace AC {
 #if __linux__
