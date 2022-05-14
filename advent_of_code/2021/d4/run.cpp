@@ -6,6 +6,8 @@ typedef std::set<uint> uint_set;
 struct Board {
   uint grid[5][5];
   uint minDrawRowCol[10];
+  uint minRowColID = 0;
+  uint minDraw = -1;
 };
 
 void solution(IData &inputData) {
@@ -90,12 +92,10 @@ void solution(IData &inputData) {
                 std::max(ite->second, boards[boardID].minDrawRowCol[c]);
             boards[boardID].minDrawRowCol[5 + r] =
                 std::max(ite->second, boards[boardID].minDrawRowCol[5 + r]);
-          }
-          else{
+          } else {
             boards[boardID].minDrawRowCol[c] = inputSize;
-            boards[boardID].minDrawRowCol[5+r] = inputSize;
+            boards[boardID].minDrawRowCol[5 + r] = inputSize;
           }
-
 
           boards[boardID].grid[r][c] = num;
           ++c;
@@ -116,10 +116,9 @@ void solution(IData &inputData) {
   for (int i = 0; i < 5; ++i) {
     for (int j = 0; j < 5; ++j) {
       uint n = boards[minBoardID].grid[i][j];
-      if ((ite = inputNumbers.find(n)) != inputNumbers.end() &&
-          ite->second > minDraw) {
+      ite = inputNumbers.find(n);
+      if (ite->second > minDraw)
         sumOfUnmarked += n;
-      }
     }
   }
   uint lastDrawnNumber =
@@ -136,8 +135,134 @@ void solution(IData &inputData) {
   std::cout << "Found the last draw: " << lastDrawnNumber << std::endl;
   return;
 }
-void solution2(IData &inputData) {}
+void solution2(IData &inputData) {
+  std::unordered_map<uint, uint> inputNumbers; // (number, index)
+  std::vector<Board> boards = {
+      Board{}}; // Initialize the vector with one default board
 
+  std::istringstream stream(inputData.data);
+  std::string str;
+
+  // find the first non-empty row, that is our numbers to be drawed.
+  do {
+    std::getline(stream, str);
+    if (!str.empty()) {
+      VecStrView numbers = AC::split(str, ',');
+      for (uint i = 0; i < numbers.size(); ++i) {
+        inputNumbers.insert({atoi(numbers[i].data()), i});
+      }
+    }
+  } while (str.empty());
+  std::getline(stream, str); // the very next line is an empty line
+  size_t inputSize = inputNumbers.size();
+
+  // Foreach row of the grid input,
+  // 	for each number, find the index of that number in the input sequence.
+  uint boardID = 0;
+  auto minElementID = [&inputSize](uint *ptr, uint *out) {
+    uint minVal = inputSize;
+    uint minID = 0;
+    for (int i = 0; i < 5; ++i) {
+      if (*(ptr + i) < minVal) {
+        minVal = *(ptr + i);
+        minID = i;
+      }
+    }
+    *out = minVal;
+    return minID;
+  };
+  auto updateMinVal = [&boardID, &boards, &minElementID]() {
+    uint minVal = 0, colMinVal = 0;
+    uint minValID = minElementID(&boards[boardID].minDrawRowCol[0], &minVal);
+    uint colMinValID =
+        minElementID(&boards[boardID].minDrawRowCol[5], &colMinVal) + 5;
+
+    // find the row/col with minimum draw
+    if (minVal > colMinVal) {
+      minVal = colMinVal;
+      minValID = colMinValID;
+    }
+    // replace the global min if this board has shorter path to success
+    if (minVal < boards[boardID].minDraw) {
+      boards[boardID].minDraw = minVal;
+      boards[boardID].minRowColID = minValID;
+    }
+  };
+
+  uint r = 0, c = 0;
+  std::_List_iterator ite = inputNumbers.begin();
+  do {
+    if (std::getline(stream, str)) {
+      if (str.empty()) {
+        updateMinVal();
+
+        r = 0;
+        c = 0;
+        boards.push_back(Board{});
+        ++boardID;
+      } else {
+        VecStrView line = AC::split(str);
+        c = 0;
+        for (auto token : line) {
+          if (token.empty())
+            continue;
+
+          uint num = atoi(token.data());
+
+          if ((ite = inputNumbers.find(num)) != inputNumbers.end()) {
+            boards[boardID].minDrawRowCol[c] =
+                std::max(ite->second, boards[boardID].minDrawRowCol[c]);
+            boards[boardID].minDrawRowCol[5 + r] =
+                std::max(ite->second, boards[boardID].minDrawRowCol[5 + r]);
+          } else {
+            boards[boardID].minDrawRowCol[c] = inputSize;
+            boards[boardID].minDrawRowCol[5 + r] = inputSize;
+          }
+
+          boards[boardID].grid[r][c] = num;
+          ++c;
+        }
+        ++r;
+      }
+    } else {
+      updateMinVal();
+      break;
+    }
+  } while (true);
+
+  std::cout << "Finished Iterating the boards" << std::endl;
+  uint maxDraw = 0, maxBoardID = 0;
+  for (uint i = 0; i < boards.size(); ++i) {
+    Board board = boards[i];
+    if (board.minDraw > maxDraw) {
+      maxBoardID = i;
+      maxDraw = board.minDraw;
+    }
+  }
+
+  uint sumOfUnmarked = 0;
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 5; ++j) {
+      uint n = boards[maxBoardID].grid[i][j];
+      ite = inputNumbers.find(n);
+      if (ite->second > maxDraw)
+        sumOfUnmarked += n;
+    }
+  }
+  uint lastDrawnNumber =
+      std::find_if(
+          inputNumbers.begin(), inputNumbers.end(),
+          [&maxDraw](const std::unordered_map<uint, uint>::value_type &entry) {
+            return entry.second == maxDraw;
+          })
+          ->first;
+  inputData.result = sumOfUnmarked * lastDrawnNumber;
+
+  std::cout << "Found sum of the unmarked values: " << sumOfUnmarked
+            << std::endl;
+  std::cout << "Found the last draw: " << lastDrawnNumber << std::endl;
+  return;
+}
 int main() {
   std::string rawTestInput = R"(
 7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
@@ -167,10 +292,10 @@ int main() {
     solution(inputData);
     std::cout << "#1 Result: " << inputData.result << std::endl;
   }
-  // if (test(&solution2, testData, 230)) {
-  //   IData inputData{AC::split(inputString, '\n'), 0};
-  //   solution2(inputData);
-  //   std::cout << "#2 Result: " << inputData.result << std::endl;
-  // }
+  if (test(&solution2, testData, 1924u)) {
+    IData inputData = {inputString, 0u};
+    solution2(inputData);
+    std::cout << "#2 Result: " << inputData.result << std::endl;
+  }
   return 0;
 }
