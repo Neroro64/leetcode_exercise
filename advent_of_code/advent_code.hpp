@@ -1,19 +1,22 @@
+#include <algorithm>
+#include <charconv>
+#include <chrono>
+#include <cmath>
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <iterator>
+#include <numeric>
+#include <optional>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stdint.h>
+#include <stdio.h>
 #include <string>
 #include <string_view>
-#include <vector>
-#include <stdint.h>
-#include <chrono>
-#include <optional>
-#include <algorithm>
 #include <unordered_map>
-#include <charconv>
-#include <cmath>
-#include <stdio.h>
-#include <queue>
 #include <unordered_set>
+#include <vector>
 
 template <typename DataType, typename ResultType> struct InputData {
   DataType data;
@@ -74,7 +77,8 @@ static VecStrView split(std::string_view inputStr, char delimiter = ' ') {
   vecStrView.reserve(charCount + 1);
   size_t strSize = inputStr.size();
 
-  uint32_t offset = 0, pos = 0;
+  uint32_t offset, pos;
+  offset = inputStr.find_first_not_of(' ');
   while ((pos = inputStr.find(delimiter, offset)) && pos < strSize) {
     vecStrView.emplace_back(inputStr.substr(offset, pos - offset));
     offset = pos + 1;
